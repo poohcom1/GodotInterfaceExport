@@ -110,7 +110,7 @@ namespace GodotComponentExport.SourceGenerators
                     foreach (var exportedInterface in exportedInterfaces)
                     {
                         content.Add("[Export]");
-                        content.Add($"private Node {GetInterfaceObjectName(exportedInterface.Identifier.Text)} = null!;");
+                        content.Add($"public Node {GetInterfaceObjectName(exportedInterface.Identifier.Text)} = null!;");
                     }
                     // Wire components
                     content.Add("");

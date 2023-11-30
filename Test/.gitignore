@@ -1,3 +1,4 @@
-bin
-obj
+# Godot 4+ specific ignores
+.godot/
+
 .generated
