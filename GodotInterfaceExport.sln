@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GodotComponentExport", "GodotComponentExport\GodotComponentExport.csproj", "{0F383D07-B2B5-4CC2-ACA1-F0741DDAD2EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GodotInterfaceExport", "GodotInterfaceExport\GodotInterfaceExport.csproj", "{0F383D07-B2B5-4CC2-ACA1-F0741DDAD2EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

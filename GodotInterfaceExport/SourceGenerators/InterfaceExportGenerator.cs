@@ -1,12 +1,12 @@
 ﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
-using GodotComponentExport.Attributes;
+using GodotInterfaceExport.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using GodotSharp.SourceGenerators;
 
-namespace GodotComponentExport.SourceGenerators
+namespace GodotInterfaceExport.SourceGenerators
 {
     /// <summary>
     /// Adapted from https://github.dev/Cat-Lips/GodotSharp.SourceGenerators.SourceGeneratorForDeclaredMemberWithAttribute.cs
