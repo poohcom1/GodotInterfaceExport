@@ -1,16 +1,19 @@
-namespace GodotComponentExportTest;
+namespace GodotInterfaceExportTest;
 using Godot;
 using Godot.Collections;
-using GodotComponentExport.Attributes;
+using GodotInterfaceExport.Attributes;
 
 public partial class TestNode : Node
 {
-    [ExportInterface]
-    public Node2D Component { set; get; }
+    [Export]
+    public ComponentContainer Components { get; set; }
 
     public override void _Ready()
     {
         base._Ready();
-        WireComponents();
+
+        Components.WireComponents(this);
+        Components.ComponentA.DoSomething();
+        Components.ComponentB.DoSomethingElse();
     }
 }

@@ -4,12 +4,12 @@
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net7.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'ios' ">net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <RootNamespace>GodotComponentExportTest</RootNamespace>
+    <RootNamespace>GodotInterfaceExportTest</RootNamespace>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>.generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GodotComponentExport\GodotComponentExport.csproj"
+    <ProjectReference Include="..\GodotInterfaceExport\GodotInterfaceExport.csproj"
       OutputItemType="Analyzer" />
   </ItemGroup>
 </Project>

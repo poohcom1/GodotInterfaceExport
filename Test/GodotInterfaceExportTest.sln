@@ -1,6 +1,6 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GodotComponentExport Test", "GodotComponentExport Test.csproj", "{95CEB5DD-9F4E-4B88-9F4B-C86978E83BEB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GodotInterfaceExportTest", "GodotInterfaceExportTest.csproj", "{95CEB5DD-9F4E-4B88-9F4B-C86978E83BEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
