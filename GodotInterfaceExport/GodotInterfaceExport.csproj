@@ -8,7 +8,20 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Godot Interface Export</Title>
+    <Authors>poohcom1</Authors>
+    <PackageProjectUrl>https://github.com/poohcom1/GodotInterfaceExport</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/poohcom1/GodotInterfaceExport</RepositoryUrl>
+    <Description>A Godot C# package to support exporting interface types!</Description>
+    <Version>0.0.1</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="GodotSharp.SourceGenerators" Version="2.3.0" />
