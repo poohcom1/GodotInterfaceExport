@@ -1,7 +1,5 @@
 namespace GodotInterfaceExportTest;
 using Godot;
-using Godot.Collections;
-using GodotInterfaceExport.Attributes;
 
 public partial class TestNode : Node
 {
@@ -15,5 +13,6 @@ public partial class TestNode : Node
         Components.WireComponents(this);
         Components.ComponentA.DoSomething();
         Components.ComponentB.DoSomethingElse();
+        Components.ResourceA.DoSomething();
     }
 }
