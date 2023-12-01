@@ -1,10 +1,10 @@
-﻿using System.Collections.Immutable;
-using System.Text.RegularExpressions;
-using GodotInterfaceExport.Attributes;
+﻿using GodotInterfaceExport.Attributes;
+using GodotSharp.SourceGenerators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using GodotSharp.SourceGenerators;
+using System.Collections.Immutable;
+using System.Text.RegularExpressions;
 
 namespace GodotInterfaceExport.SourceGenerators
 {
@@ -14,13 +14,11 @@ namespace GodotInterfaceExport.SourceGenerators
     [Generator]
     internal class InterfaceExportGenerator : IIncrementalGenerator
     {
-        private static readonly string attributeType = typeof(ExportNodeInterface).Name;
-        private static readonly string attributeName = Regex.Replace(
-            attributeType,
-            "Attribute$",
-            "",
-            RegexOptions.Compiled
-        );
+
+        private static readonly string nodeAttributeType = typeof(ExportNodeInterface).Name;
+        private static readonly string nodeAttributeName = Regex.Replace(nodeAttributeType, "Attribute$", "", RegexOptions.Compiled);
+        private static readonly string resourceAttributeType = typeof(ExportResourceInterface).Name;
+        private static readonly string resourceAttributeName = Regex.Replace(resourceAttributeType, "Attribute$", "", RegexOptions.Compiled);
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -50,7 +48,8 @@ namespace GodotInterfaceExport.SourceGenerators
                     {
                         foreach (var attribute in attributeList.Attributes)
                         {
-                            if (attribute.Name.ToString() == attributeName)
+                            var name = attribute.Name.ToString();
+                            if (name == nodeAttributeName || name == resourceAttributeName)
                                 return true;
                         }
                     }
@@ -72,29 +71,34 @@ namespace GodotInterfaceExport.SourceGenerators
             )
             {
                 INamedTypeSymbol? classSymbol = null;
-                List<PropertyDeclarationSyntax> exportedInterfaces = [];
+                List<PropertyDeclarationSyntax> nodeInterfaces = [];
+                List<PropertyDeclarationSyntax> resourceInterfaces = [];
 
                 foreach (var node in nodes.Distinct())
                 {
                     if (context.CancellationToken.IsCancellationRequested)
                         return;
-
                     var model = compilation.GetSemanticModel(node.SyntaxTree);
-                    var symbol = model.GetDeclaredSymbol(Node(node));
+                    var symbol = model.GetDeclaredSymbol(node);
                     if (node is not PropertyDeclarationSyntax property)
                         continue;
-
                     if (symbol is null)
                         continue;
-
                     classSymbol ??= symbol.ContainingType;
-
-                    var attribute = symbol
+                    var nodeAttribute = symbol
                         .GetAttributes()
-                        .SingleOrDefault(x => x.AttributeClass?.Name == attributeType);
-                    if (attribute is null)
-                        continue;
-                    exportedInterfaces.Add(property);
+                        .SingleOrDefault(x => x.AttributeClass?.Name == nodeAttributeType);
+                    var resourceAttribute = symbol
+                        .GetAttributes()
+                        .SingleOrDefault(x => x.AttributeClass?.Name == resourceAttributeType);
+                    if (nodeAttribute is not null)
+                    {
+                        nodeInterfaces.Add(property);
+                    }
+                    else if (resourceAttribute is not null)
+                    {
+                        resourceInterfaces.Add(property);
+                    }
                 }
 
                 if (classSymbol is null)
@@ -106,14 +110,18 @@ namespace GodotInterfaceExport.SourceGenerators
 
                 var content = new List<string>();
 
-                const string dictName = "_exportedNodeInterfaces";
+                const string dictName = "_exportedInterfaces";
 
                 // Data fields
-                content.Add($"private Dictionary<string, string> {dictName} = new Dictionary<string, string>()");
+                content.Add($"private Dictionary<string, Variant> {dictName} = new Dictionary<string, Variant>()");
                 content.Add("{");
-                foreach (var node in exportedInterfaces)
+                foreach (var node in nodeInterfaces)
                 {
-                    content.Add($"    {{\"{node.Identifier.Text}\",\"\"}},");
+                    content.Add($"    {{ \"{node.Identifier.Text}\", \"\" }},");
+                }
+                   foreach (var res in resourceInterfaces)
+                {
+                    content.Add($"    {{ \"{res.Identifier.Text}\", new Variant() }},");
                 }
                 content.Add("};");
 
@@ -122,16 +130,28 @@ namespace GodotInterfaceExport.SourceGenerators
                 content.Add("public override partial Array<Dictionary> _GetPropertyList()");
                 content.Add("{");
                 content.Add("    var properties = new Array<Dictionary>();");
-                foreach (var exportedInterface in exportedInterfaces)
+                foreach (var node in nodeInterfaces)
                 {
-                    string name = exportedInterface.Identifier.Text;
+                    string name = node.Identifier.Text;
 
                     content.Add("    properties.Add(new Dictionary {");
-                    content.Add($"        {{ \"name\", \"{name}\"}},");
+                    content.Add($"        {{ \"name\", \"{name}\" }},");
                     content.Add("        { \"type\", (int)Variant.Type.NodePath },");
                     content.Add("        { \"usage\", (int)PropertyUsageFlags.Default },");
                     content.Add("        { \"hint\", (int)PropertyHint.NodePathValidTypes },");
                     content.Add("        { \"hint_string\", \"Node\" },");
+                    content.Add("    });");
+                }
+                foreach (var resource in resourceInterfaces)
+                {
+                    string name = resource.Identifier.Text;
+
+                    content.Add("    properties.Add(new Dictionary {");
+                    content.Add($"        {{ \"name\", \"{name}\" }},");
+                    content.Add("        { \"type\", (int)Variant.Type.Object },");
+                    content.Add("        { \"usage\", (int)PropertyUsageFlags.Default },");
+                    content.Add("        { \"hint\", (int)PropertyHint.ResourceType },");
+                    content.Add("        { \"hint_string\", \"Resource\" },");
                     content.Add("    });");
                 }
                 content.Add("    return properties;");
@@ -139,7 +159,7 @@ namespace GodotInterfaceExport.SourceGenerators
                 // _Get()
                 content.Add("public override partial Variant _Get(StringName property)");
                 content.Add("{");
-                content.Add("    if (_exportedNodeInterfaces.ContainsKey(property))");
+                content.Add($"    if ({dictName}.ContainsKey(property))");
                 content.Add($"        return {dictName}[property];");
                 content.Add("    return base._Get(property);");
                 content.Add("}");
@@ -149,7 +169,7 @@ namespace GodotInterfaceExport.SourceGenerators
                 content.Add("{");
                 content.Add($"    if ({dictName}.ContainsKey(property))");
                 content.Add("    {");
-                content.Add($"        {dictName}[property] = value.AsString();");
+                content.Add($"        {dictName}[property] = value;");
                 content.Add("        return true;");
                 content.Add("    }");
                 content.Add("    return base._Set(property, value);");
@@ -158,31 +178,27 @@ namespace GodotInterfaceExport.SourceGenerators
                 // Wire components
                 content.Add("public void WireComponents(Node root)");
                 content.Add("{");
-                foreach (var exportedInterface in exportedInterfaces)
+                foreach (var node in nodeInterfaces)
                 {
-                    var name = exportedInterface.Identifier.Text;
-                    var type = exportedInterface.Type;
-                    content.Add($"    {name} = root.GetNodeOrNull<{type}>({dictName}[\"{name}\"]);");
+                    var name = node.Identifier.Text;
+                    var type = node.Type;
+                    content.Add($"    {name} = root.GetNodeOrNull<{type}>({dictName}[\"{name}\"].AsString());");
                 }
                 content.Add("}");
 
-                var source = $@"
-using Godot;
-using Godot.Collections;
-
-{nsOpen?.Trim()}
-{nsIndent}partial class {classSymbol.ClassDef()}
-{nsIndent}{{
-{nsIndent}    {string.Join($"\n{nsIndent}    ", content)}
-{nsIndent}}}
-{nsClose?.Trim()}
-".TrimStart();
-
-                context.AddSource(GenerateFilename(classSymbol), source);
+                // Usings
+                var usings = new List<string>
+                {
+                    "using Godot;",
+                    "using Godot.Collections;"
+                };
 
 
+                context.AddSource(GenerateFilename(classSymbol), classSymbol.GeneratePartialClass(content, usings));
             }
         }
+
+        // Helper functions
 
         protected string GetInterfaceObjectName(string interfaceName)
         {
@@ -201,10 +217,8 @@ using Godot.Collections;
             return gn;
 
             static string Format(ISymbol symbol) =>
-                Truncate(string.Join("_", $"{symbol}".Split(InvalidFileNameChars)), Ext.Length);
+                string.Join("_", $"{symbol}".Split(InvalidFileNameChars)).Truncate(Ext.Length);
         }
-
-        protected virtual SyntaxNode Node(PropertyDeclarationSyntax node) => node;
 
         private static readonly char[] InvalidFileNameChars =
         [
@@ -250,8 +264,5 @@ using Godot.Collections;
             '\\',
             '/'
         ];
-
-        private static string Truncate(string source, int maxChars) =>
-            source.Length <= maxChars ? source : source.Substring(0, maxChars);
     }
 }

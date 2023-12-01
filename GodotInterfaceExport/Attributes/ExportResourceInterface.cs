@@ -1,5 +1,5 @@
 ﻿namespace GodotInterfaceExport.Attributes
 {
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class ExportNodeInterface : Attribute { }
+    public sealed class ExportResourceInterface : Attribute { }
 }

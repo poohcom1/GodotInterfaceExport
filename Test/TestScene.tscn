@@ -3,18 +3,23 @@
 [ext_resource type="Script" path="res://Scripts/TestNode.cs" id="1_qn401"]
 [ext_resource type="Script" path="res://Scripts/ComponentContainer.cs" id="2_2kt21"]
 [ext_resource type="Script" path="res://Scripts/ComponentAImpl.cs" id="2_5rf02"]
-[ext_resource type="Resource" uid="uid://dhs7eguyy5awo" path="res://resource_a.tres" id="2_dn615"]
 [ext_resource type="Script" path="res://Scripts/ComponentBImpl.cs" id="4_vsbma"]
 
 [sub_resource type="Resource" id="Resource_pbit0"]
 script = ExtResource("2_2kt21")
-ComponentA = "ComponentA"
-ComponentB = "ComponentB"
-ResourceA = ExtResource("2_dn615")
+ComponentA = NodePath("ComponentA")
+ComponentB = NodePath("ComponentB")
 
 [sub_resource type="GDScript" id="GDScript_gxhm4"]
 script/source = "extends Node
 
+"
+
+[sub_resource type="GDScript" id="GDScript_2xru7"]
+script/source = "extends Node
+
+func _ready():
+	pass
 "
 
 [node name="Container" type="Node2D"]
@@ -31,3 +36,6 @@ script = ExtResource("4_vsbma")
 
 [node name="PrototypeResource" type="Node" parent="."]
 script = SubResource("GDScript_gxhm4")
+
+[node name="TestScript" type="Node" parent="."]
+script = SubResource("GDScript_2xru7")
