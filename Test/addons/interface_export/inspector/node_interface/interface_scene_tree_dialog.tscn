@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3 uid="uid://bpvkgltp64ryn"]
+
+[ext_resource type="Script" path="res://addons/interface_export/inspector/node_interface/SceneTreeDialog.cs" id="1_lx6ni"]
+
+[node name="InterfaceSceneTreeDialog" type="ConfirmationDialog"]
+title = "Select a Node"
+position = Vector2i(0, 36)
+size = Vector2i(200, 153)
+visible = true
+script = ExtResource("1_lx6ni")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 192.0
+offset_bottom = 104.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Allowed:"
+
+[node name="InterfaceTypeLabel" type="Label" parent="VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Test"
+
+[node name="NodeTree" type="Tree" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3

@@ -18,6 +18,10 @@ config/icon="res://icon.svg"
 
 project/assembly_name="GodotInterfaceExportTest"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/interface_export/plugin.cfg")
+
 [filesystem]
 
 import/blender/enabled=false
