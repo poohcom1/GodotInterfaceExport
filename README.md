@@ -39,7 +39,7 @@ public partial class MyNode : Node
 |  - No wrappers |  - Requires tool <br> - Requires `WireComponent()` generated method to get node from paths <br> - Requires partial methods | Source-generated properties reset on build for some reason (see https://github.com/poohcom1/GodotInterfaceExport/issues/1) |
 
 ### 2. Node Container
-Use a generic node to trick Godot into accepting any Node. This hasn't worked so far due to the casting issue.
+Use a generic node to trick Godot into accepting any Node. Interfaces can be enforced with a plugin like in solution 1. This hasn't worked so far due to the casting issue.
 
 ```cs
 // GenericNode
@@ -80,7 +80,7 @@ public partial class GenericContainer<T> : Resource
 public partial class MyNode : Node
 {
     [Export]
-    private GenericContainer<IComponent> ComponentNode;
+    private GenericContainer<IComponent> ComponentNode = new();
 
     public override void _Ready()
     {
