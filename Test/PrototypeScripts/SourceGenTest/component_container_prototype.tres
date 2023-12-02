@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ComponentContainerPrototype" load_steps=2 format=3 uid="uid://cm6vifru5uvgp"]
 
-[ext_resource type="Script" path="res://PrototypeScripts/ComponentContainerPrototype.cs" id="1_ha1pm"]
+[ext_resource type="Script" path="res://PrototypeScripts/SourceGenTest/ComponentContainerPrototype.cs" id="1_ha1pm"]
 
 [resource]
 script = ExtResource("1_ha1pm")

@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://b7wryn77q2vr2"]
+
+[ext_resource type="Script" path="res://PrototypeScripts/GenericTest/MainNodeTest.cs" id="1_2vpa4"]
+[ext_resource type="Script" path="res://Scripts/ComponentAImpl.cs" id="2_6tmon"]
+
+[node name="Node" type="Node" node_paths=PackedStringArray("ComponentA", "Node")]
+script = ExtResource("1_2vpa4")
+ComponentA = NodePath("Node2D")
+Node = NodePath("Node2D")
+
+[node name="Node2D" type="Node2D" parent="."]
+script = ExtResource("2_6tmon")

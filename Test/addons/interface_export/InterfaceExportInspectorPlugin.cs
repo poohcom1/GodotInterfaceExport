@@ -6,6 +6,7 @@ using Godot;
 using GodotInterfaceExport.Editor;
 using GodotInterfaceExport.Editor.Models;
 using GodotInterfaceExport.Services;
+using GodotInterfaceExportTest;
 
 internal partial class InterfaceExportInspectorPlugin : EditorInspectorPlugin
 {
@@ -23,7 +24,7 @@ internal partial class InterfaceExportInspectorPlugin : EditorInspectorPlugin
 
     public override bool _CanHandle(GodotObject @object)
     {
-        return _inspectorPluginService.CanHandle(@object);
+        return true;
     }
 
     public override bool _ParseProperty(
@@ -36,6 +37,16 @@ internal partial class InterfaceExportInspectorPlugin : EditorInspectorPlugin
         bool wide
     )
     {
+        if (name == "ComponentA")
+        {
+            NodeInterface.PropertyEditor propertyEditor = new();
+            propertyEditor.Init(typeof(IComponentA), _interfaceAnalyzerService);
+
+            AddPropertyEditor(name, propertyEditor);
+            return true;
+        }
+
+        // Old
         if (
             _inspectorPluginService.GetAttributeInfo(@object, name)
             is not AttributeInfo attributeInfo
