@@ -34,19 +34,12 @@ public partial class MyNode : Node
 }
 ```
 
-Pros:
- - Straightforward syntax
-
-Cons:
- - Requires tool
- - Requires `WireComponent()` generated method to get node from paths
- - Requires partial methods
-
-Issues:
- - Source-generated properties reset on build for some reason (see https://github.com/poohcom1/GodotInterfaceExport/issues/1)
+| Pros | Cons | Issues |
+| -- | -- | -- |
+|  - Straightforward syntax |  - Requires tool <br> - Requires `WireComponent()` generated method to get node from paths <br> - Requires partial methods | Source-generated properties reset on build for some reason (see https://github.com/poohcom1/GodotInterfaceExport/issues/1) |
 
 ### 2. Node Container
-Use a generic node to trick Godot into accepting any Node.
+Use a generic node to trick Godot into accepting any Node. This hasn't work so far due to the caching issue.
 
 ```cs
 // GenericNode
@@ -68,19 +61,12 @@ public partial class MyNode : Node
 }
 ```
 
-Pros:
- - Doesn't require tool
- - Doesn't require attribute
- - Doesn't require source generation
-
-Cons:
- - Requires wrapper object
-
-Issues:
- - Godot prevents casting from the actual node type to `GenericNode<T>`
+| Pros | Cons | Issues |
+| -- | -- | -- |
+|  - Doesn't require tool <br>  - Doesn't require attribute <br> - Doesn't require source generation | - Requires wrapper object | Godot prevents casting from the actual node type to `GenericNode<T>` |
 
 ### 3. Resource Container
-Use a generic resource type that contains a NodePath field
+Use a generic resource type that contains a NodePath field. This did not work so far due to the resource script issue.
 
 ```cs
 // GenericNode
@@ -103,11 +89,7 @@ public partial class MyNode : Node
 }
 ```
 
-Pros:
- - Same as node container
+| Pros | Cons | Issues |
+| -- | -- | -- |
+| Same as node container | - Requires one nesting level in export | Godot fails to serialize a non `[GlobalClass]` resource. We cannot make `GenericContainer<T>` a global class because it contains a generic. |
 
-Cons:
- - Requires one nesting level in export
-
-Issues:
- - Godot fails to serialize a non `[GlobalClass]` resource. We cannot make `GenericContainer<T>` a global class because it contains a generic.
