@@ -1,3 +1,4 @@
+#pragma warning disable CS8603, CS8619, CS8625
 using Microsoft.CodeAnalysis;
 
 namespace GodotSharp.SourceGenerators
