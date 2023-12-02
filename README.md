@@ -36,10 +36,10 @@ public partial class MyNode : Node
 
 | Pros | Cons | Issues |
 | -- | -- | -- |
-|  - Straightforward syntax |  - Requires tool <br> - Requires `WireComponent()` generated method to get node from paths <br> - Requires partial methods | Source-generated properties reset on build for some reason (see https://github.com/poohcom1/GodotInterfaceExport/issues/1) |
+|  - No wrappers |  - Requires tool <br> - Requires `WireComponent()` generated method to get node from paths <br> - Requires partial methods | Source-generated properties reset on build for some reason (see https://github.com/poohcom1/GodotInterfaceExport/issues/1) |
 
 ### 2. Node Container
-Use a generic node to trick Godot into accepting any Node. This hasn't work so far due to the caching issue.
+Use a generic node to trick Godot into accepting any Node. This hasn't worked so far due to the casting issue.
 
 ```cs
 // GenericNode
