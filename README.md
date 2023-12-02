@@ -72,7 +72,9 @@ Use a generic resource type that contains a NodePath field. This did not work so
 // GenericNode
 public partial class GenericContainer<T> : Resource
 {
+    [Export]
     private NodePath _path;
+
     public T GetComponent(Node root) => (T)root.GetNode(_path);
 }
 
