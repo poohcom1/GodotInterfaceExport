@@ -5,9 +5,11 @@ Godot C# package to support exporting interface types!
 _THIS PROJECT IS NOT PRODUCTION READY!_
 
 ## Dev Logs
-Here are a couple of solutions I've explored, and their pros and cons and issues
+Here are a couple of solutions I've explored, and their pros and cons and issues.
 
-### Source Generated NodePath and Resources (Current)
+### 1. Source Generated Exports
+This is the current solution implemented. The issue is not a breaking one, but is still a major annoyance.
+
 Annotate an interface property with an attribute, and a source generator will generate NodePath/Resource properties to represent each interface.
 An `InpectorPlugin` can be used to enforce the generic with reflection.
 
@@ -43,7 +45,7 @@ Cons:
 Issues:
  - Source-generated properties reset on build for some reason (see https://github.com/poohcom1/GodotInterfaceExport/issues/1)
 
-### Node Container
+### 2. Node Container
 Use a generic node to trick Godot into accepting any Node.
 
 ```cs
@@ -77,7 +79,7 @@ Cons:
 Issues:
  - Godot prevents casting from the actual node type to `GenericNode<T>`
 
-### Resource Container
+### 3. Resource Container
 Use a generic resource type that contains a NodePath field
 
 ```cs
