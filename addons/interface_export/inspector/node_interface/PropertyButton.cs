@@ -13,10 +13,8 @@ internal partial class PropertyButton : Button
         _interfaceAnalyzer = interfaceAnalyzer;
     }
 
-    public void Update(Node root, string nodepath)
+    public void Update(Node node)
     {
-        var node = root.GetNodeOrNull(nodepath);
-
         if (node != null)
         {
             string nodename = node.Name;
