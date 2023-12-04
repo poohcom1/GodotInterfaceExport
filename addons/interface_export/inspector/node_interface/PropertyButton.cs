@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 #if TOOLS
 namespace Addons.InterfaceExport.NodeInterface;
 using System;

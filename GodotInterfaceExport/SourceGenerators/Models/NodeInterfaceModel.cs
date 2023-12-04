@@ -1,8 +1,8 @@
 using Microsoft.CodeAnalysis;
 
 namespace GodotInterfaceExport.Models {
-    public class NodeInterfaceModel(string propertyName, string interfaceType, bool generateField, Location syntaxLocation) {
-        const string NAME_SUFFIX = "Node";
+    internal class NodeInterfaceModel(string propertyName, string interfaceType, bool generateField, Location syntaxLocation) {
+        public const string NAME_SUFFIX = "Node";
 
         public string PropertyName { get; } = propertyName;
         public string InterfaceType { get; } = interfaceType;

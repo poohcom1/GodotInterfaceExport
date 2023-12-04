@@ -1,3 +1,4 @@
+#pragma warning disable CS8604
 #if TOOLS
 namespace Addons.InterfaceExport;
 

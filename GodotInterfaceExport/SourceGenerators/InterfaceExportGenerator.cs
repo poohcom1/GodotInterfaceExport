@@ -1,5 +1,6 @@
 ﻿using GodotInterfaceExport;
 using GodotInterfaceExport.Models;
+using GodotInterfaceExport.SourceGenerators.Constants;
 using GodotSharp.SourceGenerators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -15,7 +16,6 @@ namespace GodotInterfaceExport.SourceGenerators
     [Generator]
     internal class InterfaceExportGenerator : IIncrementalGenerator
     {
-
         private static readonly string nodeAttributeType = typeof(ExportInterface).Name;
         private static readonly string nodeAttributeName = Regex.Replace(nodeAttributeType, "Attribute$", "", RegexOptions.Compiled);
         // private static readonly string resourceAttributeType = typeof(ExportResourceInterface).Name;
@@ -39,71 +39,81 @@ namespace GodotInterfaceExport.SourceGenerators
 
             static bool IsSyntaxTarget(SyntaxNode node, CancellationToken _)
             {
-                return node is PropertyDeclarationSyntax type && HasAttributeType();
+                return (node is PropertyDeclarationSyntax type && HasAttributeType(type)) ||
+                    (node is FieldDeclarationSyntax field && HasAttributeType(field)); // FIXME: Field isn't working
 
-                bool HasAttributeType()
+                static bool HasAttributeType(MemberDeclarationSyntax type)
                 {
-                    if (type.AttributeLists.Count is 0)
-                        return false;
-
                     foreach (var attributeList in type.AttributeLists)
                     {
                         foreach (var attribute in attributeList.Attributes)
                         {
-                            var name = attribute.Name.ToString();
-                            if (attributeNames.Contains(name))
+                            if (attributeNames.Contains(attribute.Name.ToString()))
                                 return true;
                         }
                     }
-
                     return false;
                 }
             }
 
-            static PropertyDeclarationSyntax GetSyntaxTarget(
+            static MemberDeclarationSyntax GetSyntaxTarget(
                 GeneratorSyntaxContext context,
                 CancellationToken _
-            ) => (PropertyDeclarationSyntax)context.Node;
+            ) => (MemberDeclarationSyntax)context.Node;
 
             void OnExecute(
                 SourceProductionContext context,
                 Compilation compilation,
-                ImmutableArray<PropertyDeclarationSyntax> nodes,
+                ImmutableArray<MemberDeclarationSyntax> nodes,
                 AnalyzerConfigOptionsProvider options
             )
             {
-                try {
+                try
+                {
                     Dictionary<INamedTypeSymbol, List<NodeInterfaceModel>> nodeInterfaces = [];
 
                     foreach (var node in nodes.Distinct())
                     {
-                        if (context.CancellationToken.IsCancellationRequested)
-                            return;
+                        if (context.CancellationToken.IsCancellationRequested) return;
                         var model = compilation.GetSemanticModel(node.SyntaxTree);
                         var symbol = model.GetDeclaredSymbol(node);
-                        if (node is not PropertyDeclarationSyntax property)
-                            continue;
-                        if (symbol is null || symbol.ContainingType is null)
-                            continue;
-
+                        if (symbol is null || symbol.ContainingType is null) continue;
                         // Init arrays
                         if (!nodeInterfaces.ContainsKey(symbol.ContainingType))
-                        {
                             nodeInterfaces[symbol.ContainingType] = [];
+                        // Check if [Export] attribute is present
+                        bool missingExport = false; // !symbol.GetAttributes().Any(x => x.AttributeClass?.Name == "[Export]" || x.AttributeClass?.Name == "[Godot.Export]");
+                        // Get our attribtues
+                        var attributeSymbol = symbol.GetAttributes().SingleOrDefault(x => x.AttributeClass?.Name == nodeAttributeName);
+                        if (attributeSymbol is null) continue;
+                        if (node is PropertyDeclarationSyntax prop)
+                        {
+                            AddMember(prop.Identifier.Text);
+                        }
+                        if (node is FieldDeclarationSyntax field)
+                        {
+                            foreach (var variable in field.Declaration.Variables)
+                            {
+                                AddMember(variable.Identifier.Text);
+                            }
                         }
 
-                        var attributeSymbol = symbol
-                            .GetAttributes()
-                            .SingleOrDefault(x => x.AttributeClass?.Name == nodeAttributeName);
-                        if (attributeSymbol is null)
-                            continue;
-                        
-                        nodeInterfaces[symbol.ContainingType].Add(new NodeInterfaceModel(
-                            property.Identifier.Text,
-                            attributeSymbol.ConstructorArguments[0].Value!.ToString(),
-                            (bool)attributeSymbol.ConstructorArguments[1].Value!,
-                            attributeSymbol.ApplicationSyntaxReference!.GetSyntax().GetLocation()
-                        ));
+                        // Make this just a little more concise
+                        void AddMember(string name)
+                        {
+                            nodeInterfaces[symbol.ContainingType].Add(new NodeInterfaceModel(
+                                name,
+                                attributeSymbol.ConstructorArguments[0].Value!.ToString(),
+                                (bool)attributeSymbol.ConstructorArguments[1].Value!,
+                                attributeSymbol.ApplicationSyntaxReference!.GetSyntax().GetLocation()
+                            ));
+
+                            if (missingExport)
+                            {
+                                var descriptor = DiagnosticIssues.NoExportAttribute(name);
+                                context.ReportDiagnostic(Diagnostic.Create(descriptor, attributeSymbol.ApplicationSyntaxReference.GetSyntax().GetLocation()));
+                            }
+                        }
                     }
 
                     foreach (var classSymbol in nodeInterfaces.Keys)
@@ -120,7 +130,9 @@ namespace GodotInterfaceExport.SourceGenerators
                         diagnostics.ToList().ForEach(context.ReportDiagnostic);
                         context.AddSource(GenerateFilename(classSymbol), content);
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Log.Error(e);
                     throw;
                 }
@@ -138,7 +150,7 @@ namespace GodotInterfaceExport.SourceGenerators
             {
                 if (!node.IsNameValid())
                 {
-                    var descriptor = new DiagnosticDescriptor(nameof(ExportInterface), "Invalid name", $"The name of the property {node.PropertyName} is invalid. It must end with \"Interface\".", "Usage", DiagnosticSeverity.Error, true);
+                    var descriptor = DiagnosticIssues.InvalidMemberName(node.PropertyName);
                     diagnostics.Add(Diagnostic.Create(descriptor, node.SyntaxLocation));
                     continue;
                 }
@@ -169,7 +181,7 @@ namespace GodotInterfaceExport.SourceGenerators
         protected virtual string GenerateFilename(ISymbol symbol)
         {
             var gn = $"{Format(symbol)}{Ext}";
-            // Log.Debug($"Generated Filename ({gn.Length}): {gn}\n");
+            Log.Debug($"Generated Filename ({gn.Length}): {gn}\n");
             return gn;
 
             static string Format(ISymbol symbol) =>
