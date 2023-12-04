@@ -7,7 +7,7 @@ Godot C# package to support exporting interface types!
 1. Install the C# package from nuget.
 
 ```sh
-dotnet add package Godot.DependencyInjection
+dotnet add package GodotInterfaceExport
 ```
 
 2. Add `interface_export` to your addon folder.
@@ -41,7 +41,7 @@ public override void _Ready()
 
 Furthermore, when selected the node in the Godot editor, the node picker will now type-check the node for you:
 
-![Node Picker](.readme/node_picker.png)
+![Node Picker](https://raw.githubusercontent.com/poohcom1/GodotInterfaceExport/master/.readme/node_picker.png)
 
 ### Manual Fields
 
@@ -51,7 +51,7 @@ If you don't want to mess with source generators or just prefer your code to be 
 public partial class CharacterMovement : Node2D
 {
     [Export]
-    [ExportInterface(typeof(ICollisionHitbox), false)]
+    [ExportInterface(typeof(ICollisionHitbox), generateProperty: false)]
     private Node? _hitbox { set; get; }
     public ICollisionHitbox? Hitbox => _hitbox as ICollisionHitbox;
 }
