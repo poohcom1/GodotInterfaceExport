@@ -50,8 +50,8 @@ internal partial class InterfaceExportInspectorPlugin : EditorInspectorPlugin
 
                 AddPropertyEditor(name, propertyEditor);
                 return true;
-            case InterfaceAttributeType.Resource:
-                return true;
+            // case InterfaceAttributeType.Resource:
+            //     return true;
         }
 
         return base._ParseProperty(@object, type, name, hintType, hintString, usageFlags, wide);

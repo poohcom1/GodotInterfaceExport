@@ -1,7 +1,6 @@
 namespace GodotInterfaceExport.Editor;
 using System;
 using System.Reflection;
-using GodotInterfaceExport.Attributes;
 using GodotInterfaceExport.Editor.Models;
 
 public class InspectorPluginService
@@ -14,10 +13,7 @@ public class InspectorPluginService
 
         foreach (PropertyInfo property in properties)
         {
-            if (
-                Attribute.IsDefined(property, typeof(ExportNodeInterface))
-                || Attribute.IsDefined(property, typeof(ExportResourceInterface))
-            )
+            if (Attribute.IsDefined(property, typeof(ExportNodeInterface)))
             {
                 return true;
             }
@@ -39,12 +35,15 @@ public class InspectorPluginService
 
         if (Attribute.IsDefined(propertyInfo, typeof(ExportNodeInterface)))
         {
-            return new AttributeInfo(InterfaceAttributeType.Node, propertyInfo.PropertyType);
-        }
+            // Get the attributes applied to the property
+            object[] attributes = propertyInfo.GetCustomAttributes(true);
 
-        if (Attribute.IsDefined(propertyInfo, typeof(ExportResourceInterface)))
-        {
-            return new AttributeInfo(InterfaceAttributeType.Resource, propertyInfo.PropertyType);
+            // Find the attribute of the desired type (MyAttribute in this case)
+            ExportNodeInterface myAttribute = attributes
+                .OfType<ExportNodeInterface>()
+                .FirstOrDefault();
+
+            return new AttributeInfo(InterfaceAttributeType.Node, myAttribute.InterfaceType);
         }
 
         return null;

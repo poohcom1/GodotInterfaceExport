@@ -1,4 +1,5 @@
-﻿using GodotInterfaceExport.Attributes;
+﻿using GodotInterfaceExport;
+using GodotInterfaceExport.Models;
 using GodotSharp.SourceGenerators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,10 +17,10 @@ namespace GodotInterfaceExport.SourceGenerators
     {
 
         private static readonly string nodeAttributeType = typeof(ExportNodeInterface).Name;
-        private static readonly string resourceAttributeType = typeof(ExportResourceInterface).Name;
+        // private static readonly string resourceAttributeType = typeof(ExportResourceInterface).Name;
         private static readonly string nodeAttributeName = Regex.Replace(nodeAttributeType, "Attribute$", "", RegexOptions.Compiled);
-        private static readonly string resourceAttributeName = Regex.Replace(resourceAttributeType, "Attribute$", "", RegexOptions.Compiled);
-        private static readonly string[] attributeNames = [nodeAttributeName, resourceAttributeName];
+        // private static readonly string resourceAttributeName = Regex.Replace(resourceAttributeType, "Attribute$", "", RegexOptions.Compiled);
+        private static readonly string[] attributeNames = [nodeAttributeName];
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -71,144 +72,88 @@ namespace GodotInterfaceExport.SourceGenerators
                 AnalyzerConfigOptionsProvider options
             )
             {
-                // class -> attribute -> properties
-                Dictionary<INamedTypeSymbol, Dictionary<string, List<PropertyDeclarationSyntax>>> interfaces = [];
+                try {
+                    // class -> attribute -> properties
+                    Dictionary<INamedTypeSymbol, List<NodeInterfaceModel>> nodeInterfaces = [];
 
-
-                foreach (var node in nodes.Distinct())
-                {
-                    if (context.CancellationToken.IsCancellationRequested)
-                        return;
-                    var model = compilation.GetSemanticModel(node.SyntaxTree);
-                    var symbol = model.GetDeclaredSymbol(node);
-                    if (node is not PropertyDeclarationSyntax property)
-                        continue;
-                    if (symbol is null || symbol.ContainingType is null)
-                        continue;
-
-                    if (!interfaces.ContainsKey(symbol.ContainingType))
+                    foreach (var node in nodes.Distinct())
                     {
-                        interfaces[symbol.ContainingType] = [];
-                        foreach (string attr in attributeNames)
+                        if (context.CancellationToken.IsCancellationRequested)
+                            return;
+                        var model = compilation.GetSemanticModel(node.SyntaxTree);
+                        var symbol = model.GetDeclaredSymbol(node);
+                        if (node is not PropertyDeclarationSyntax property)
+                            continue;
+                        if (symbol is null || symbol.ContainingType is null)
+                            continue;
+
+                        // Init arrays
+                        if (!nodeInterfaces.ContainsKey(symbol.ContainingType))
                         {
-                            interfaces[symbol.ContainingType][attr] = [];
+                            nodeInterfaces[symbol.ContainingType] = [];
                         }
-                    }
 
-                    foreach (string attr in attributeNames)
-                    {
                         var attributeSymbol = symbol
                             .GetAttributes()
-                            .SingleOrDefault(x => x.AttributeClass?.Name == attr);
+                            .SingleOrDefault(x => x.AttributeClass?.Name == nodeAttributeName);
                         if (attributeSymbol is null)
                             continue;
-                        interfaces[symbol.ContainingType][attr].Add(property);
+                        
+                        nodeInterfaces[symbol.ContainingType].Add(new NodeInterfaceModel(
+                            property.Identifier.Text,
+                            attributeSymbol.ConstructorArguments[0].Value!.ToString(),
+                            (bool)attributeSymbol.ConstructorArguments[1].Value!,
+                            attributeSymbol.ApplicationSyntaxReference!.GetSyntax().GetLocation()
+                        ));
                     }
-                }
 
-                foreach (var classSymbol in interfaces.Keys)
-                {
-                    if (context.CancellationToken.IsCancellationRequested)
-                        return;
+                    foreach (var classSymbol in nodeInterfaces.Keys)
+                    {
+                        if (context.CancellationToken.IsCancellationRequested)
+                            return;
 
-                    var _nodeInterfaces = interfaces[classSymbol][nodeAttributeType];
-                    var _resourceInterfaces = interfaces[classSymbol][resourceAttributeType];
-                    var content = GenerateResourceContainer(classSymbol, _nodeInterfaces, _resourceInterfaces);
-                    context.AddSource(GenerateFilename(classSymbol), content);
+                        var generateFields = nodeInterfaces[classSymbol].Where(x => x.GenerateField);
+
+                        if (!generateFields.Any())
+                            continue;
+
+                        var (content, diagnostics) = GenerateNodeInterfaces(classSymbol, generateFields);
+                        diagnostics.ToList().ForEach(context.ReportDiagnostic);
+                        context.AddSource(GenerateFilename(classSymbol), content);
+                    }
+                } catch (Exception e) {
+                    Log.Error(e);
+                    throw;
                 }
             }
         }
 
         // Generators
-        private static string GenerateResourceContainer(INamedTypeSymbol classSymbol, List<PropertyDeclarationSyntax> nodeInterfaces, List<PropertyDeclarationSyntax> resourceInterfaces)
+        private static (string, IEnumerable<Diagnostic>) GenerateNodeInterfaces(INamedTypeSymbol classSymbol, IEnumerable<NodeInterfaceModel> nodeDetails)
         {
             var content = new List<string>();
+            var diagnostics = new List<Diagnostic>();
 
-            const string dictName = "_exportedInterfaces";
-
-            // Data fields
-            content.Add($"private Dictionary<string, Variant> {dictName} = new Dictionary<string, Variant>()");
-            content.Add("{");
-            foreach (var node in nodeInterfaces)
+            // Generated fields
+            foreach (var node in nodeDetails)
             {
-                content.Add($"    {{ \"{node.Identifier.Text}\", \"\" }},");
+                if (!node.IsNameValid())
+                {
+                    var descriptor = new DiagnosticDescriptor(nameof(ExportNodeInterface), "Invalid name", $"The name of the property {node.PropertyName} is invalid. It must end with \"Interface\".", "Usage", DiagnosticSeverity.Error, true);
+                    diagnostics.Add(Diagnostic.Create(descriptor, node.SyntaxLocation));
+                    continue;
+                }
+
+                content.Add($"public {node.InterfaceType} {node.GetGeneratedName()} => ({node.InterfaceType}){node.PropertyName};");
             }
-            foreach (var res in resourceInterfaces)
-            {
-                content.Add($"    {{ \"{res.Identifier.Text}\", new Variant() }},");
-            }
-            content.Add("};");
-
-
-            // _GetPropertyList()
-            content.Add("public override partial Array<Dictionary> _GetPropertyList()");
-            content.Add("{");
-            content.Add("    var properties = new Array<Dictionary>();");
-            foreach (var node in nodeInterfaces)
-            {
-                string name = node.Identifier.Text;
-
-                content.Add("    properties.Add(new Dictionary {");
-                content.Add($"        {{ \"name\", \"{name}\" }},");
-                content.Add("        { \"type\", (int)Variant.Type.NodePath },");
-                content.Add("        { \"usage\", (int)PropertyUsageFlags.Default },");
-                content.Add("        { \"hint\", (int)PropertyHint.NodePathValidTypes },");
-                content.Add("        { \"hint_string\", \"Node\" },");
-                content.Add("    });");
-            }
-            foreach (var resource in resourceInterfaces)
-            {
-                string name = resource.Identifier.Text;
-
-                content.Add("    properties.Add(new Dictionary {");
-                content.Add($"        {{ \"name\", \"{name}\" }},");
-                content.Add("        { \"type\", (int)Variant.Type.Object },");
-                content.Add("        { \"usage\", (int)PropertyUsageFlags.Default },");
-                content.Add("        { \"hint\", (int)PropertyHint.ResourceType },");
-                content.Add("        { \"hint_string\", \"Resource\" },");
-                content.Add("    });");
-            }
-            content.Add("    return properties;");
-            content.Add("}");
-            // _Get()
-            content.Add("public override partial Variant _Get(StringName property)");
-            content.Add("{");
-            content.Add($"    if ({dictName}.ContainsKey(property))");
-            content.Add($"        return {dictName}[property];");
-            content.Add("    return base._Get(property);");
-            content.Add("}");
-
-            // _Set()
-            content.Add("public override partial bool _Set(StringName property, Variant value)");
-            content.Add("{");
-            content.Add($"    if ({dictName}.ContainsKey(property))");
-            content.Add("    {");
-            content.Add($"        {dictName}[property] = value;");
-            content.Add("        return true;");
-            content.Add("    }");
-            content.Add("    return base._Set(property, value);");
-            content.Add("}");
-
-            // Wire components
-            content.Add("public void WireComponents(Node root)");
-            content.Add("{");
-            foreach (var node in nodeInterfaces)
-            {
-                var name = node.Identifier.Text;
-                var type = node.Type;
-                content.Add($"    {name} = root.GetNodeOrNull<{type}>({dictName}[\"{name}\"].AsString());");
-            }
-            content.Add("}");
 
             // Usings
             var usings = new List<string>
                 {
-                    "using Godot;",
-                    "using Godot.Collections;"
+                    "using System.ComponentModel;"
                 };
 
-            return classSymbol.GeneratePartialClass(content, usings);
-
+            return (classSymbol.GeneratePartialClass(content, usings), diagnostics);
         }
 
         // Helper functions

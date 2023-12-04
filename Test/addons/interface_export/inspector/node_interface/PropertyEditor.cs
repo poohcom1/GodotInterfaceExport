@@ -35,17 +35,9 @@ internal partial class PropertyEditor : EditorProperty
     public override void _UpdateProperty()
     {
         // Setup
-        var root = EditorInterface.Singleton.GetEditedSceneRoot();
         var editedObject = GetEditedObject();
 
-        if (editedObject == null)
-        {
-            _nodePathButton.Update(root, "");
-        }
-        else
-        {
-            _nodePathButton.Update(root, GetEditedObject().Get(GetEditedProperty()).AsString());
-        }
+        _nodePathButton.Update((Node)editedObject.Get(GetEditedProperty()));
     }
 
     private void OnNodePathButtonPressed()
@@ -55,9 +47,7 @@ internal partial class PropertyEditor : EditorProperty
 
     private void OnTreeNodeSelected(Node node)
     {
-        var path = EditorInterface.Singleton.GetEditedSceneRoot().GetPathTo(node);
-
-        EmitChanged(GetEditedProperty(), path);
+        EmitChanged(GetEditedProperty(), node);
     }
 }
 

@@ -40,10 +40,10 @@ public class InterfaceAnalyzerService
             {
                 _nodeTypes.Add(type);
             }
-            else if (resourceType.IsAssignableFrom(type))
-            {
-                _resourceTypes.Add(type);
-            }
+            // else if (resourceType.IsAssignableFrom(type))
+            // {
+            //     _resourceTypes.Add(type);
+            // }
         }
     }
 
