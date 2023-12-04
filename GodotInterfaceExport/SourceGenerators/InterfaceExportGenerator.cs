@@ -16,9 +16,9 @@ namespace GodotInterfaceExport.SourceGenerators
     internal class InterfaceExportGenerator : IIncrementalGenerator
     {
 
-        private static readonly string nodeAttributeType = typeof(ExportNodeInterface).Name;
-        // private static readonly string resourceAttributeType = typeof(ExportResourceInterface).Name;
+        private static readonly string nodeAttributeType = typeof(ExportInterface).Name;
         private static readonly string nodeAttributeName = Regex.Replace(nodeAttributeType, "Attribute$", "", RegexOptions.Compiled);
+        // private static readonly string resourceAttributeType = typeof(ExportResourceInterface).Name;
         // private static readonly string resourceAttributeName = Regex.Replace(resourceAttributeType, "Attribute$", "", RegexOptions.Compiled);
         private static readonly string[] attributeNames = [nodeAttributeName];
 
@@ -73,7 +73,6 @@ namespace GodotInterfaceExport.SourceGenerators
             )
             {
                 try {
-                    // class -> attribute -> properties
                     Dictionary<INamedTypeSymbol, List<NodeInterfaceModel>> nodeInterfaces = [];
 
                     foreach (var node in nodes.Distinct())
@@ -139,7 +138,7 @@ namespace GodotInterfaceExport.SourceGenerators
             {
                 if (!node.IsNameValid())
                 {
-                    var descriptor = new DiagnosticDescriptor(nameof(ExportNodeInterface), "Invalid name", $"The name of the property {node.PropertyName} is invalid. It must end with \"Interface\".", "Usage", DiagnosticSeverity.Error, true);
+                    var descriptor = new DiagnosticDescriptor(nameof(ExportInterface), "Invalid name", $"The name of the property {node.PropertyName} is invalid. It must end with \"Interface\".", "Usage", DiagnosticSeverity.Error, true);
                     diagnostics.Add(Diagnostic.Create(descriptor, node.SyntaxLocation));
                     continue;
                 }

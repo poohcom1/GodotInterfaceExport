@@ -3,27 +3,35 @@ namespace Addons.InterfaceExport;
 
 using System.Reflection;
 using Godot;
-using GodotInterfaceExport.Editor;
 using GodotInterfaceExport.Editor.Models;
 using GodotInterfaceExport.Services;
 
 internal partial class InterfaceExportInspectorPlugin : EditorInspectorPlugin
 {
-    private readonly InspectorPluginService _inspectorPluginService = new();
-    private readonly InterfaceAnalyzerService _interfaceAnalyzerService = new();
+    private readonly AssemblyReflectionService _assemblyReflectionService = new();
+    private readonly InterfaceAnalyzerService _interfaceAnalyzerService;
+    private readonly AttributeAnalyzerService _attributeAnalyzerService;
 
     public InterfaceExportInspectorPlugin()
     {
-        _interfaceAnalyzerService.UpdateCache(
-            Assembly.GetAssembly(typeof(InterfaceExportInspectorPlugin)),
-            typeof(Node),
-            typeof(Resource)
+        _interfaceAnalyzerService = new(_assemblyReflectionService);
+        _attributeAnalyzerService = new(_assemblyReflectionService, GD.Print);
+
+        _assemblyReflectionService.UpdateCache(
+            Assembly.GetAssembly(typeof(InterfaceExportInspectorPlugin))
         );
+        _attributeAnalyzerService.UpdateCache();
     }
 
     public override bool _CanHandle(GodotObject @object)
     {
-        return _inspectorPluginService.CanHandle(@object);
+        if (@object is Node node && (Script)node.GetScript() is CSharpScript script)
+        {
+            return _attributeAnalyzerService.ClassHasAttribute(
+                ProjectSettings.GlobalizePath(script.ResourcePath)
+            );
+        }
+        return false;
     }
 
     public override bool _ParseProperty(
@@ -37,24 +45,21 @@ internal partial class InterfaceExportInspectorPlugin : EditorInspectorPlugin
     )
     {
         if (
-            _inspectorPluginService.GetAttributeInfo(@object, name)
-            is not AttributeInfo attributeInfo
+            _attributeAnalyzerService.GetAttributeInfo(
+                ProjectSettings.GlobalizePath(((Script)@object.GetScript()).ResourcePath),
+                name
+            )
+            is AttributeInfo attributeInfo
         )
-            return false;
-
-        switch (attributeInfo.AttributeType)
         {
-            case InterfaceAttributeType.Node:
-                NodeInterface.PropertyEditor propertyEditor = new();
-                propertyEditor.Init(attributeInfo.InterfaceType, _interfaceAnalyzerService);
+            NodeInterface.PropertyEditor propertyEditor = new();
+            propertyEditor.Init(attributeInfo.InterfaceType, _interfaceAnalyzerService);
 
-                AddPropertyEditor(name, propertyEditor);
-                return true;
-            // case InterfaceAttributeType.Resource:
-            //     return true;
+            AddPropertyEditor(name, propertyEditor);
+            return true;
         }
 
-        return base._ParseProperty(@object, type, name, hintType, hintString, usageFlags, wide);
+        return false;
     }
 }
 #endif

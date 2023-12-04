@@ -3,11 +3,10 @@ using Godot;
 using Godot.Collections;
 using GodotInterfaceExport;
 
-[Tool]
 public partial class TestNode : Node
 {
     [Export]
-    [ExportNodeInterface(typeof(IComponentA))]
+    [ExportInterface(typeof(IComponentA))]
     public Node ComponentANode { set; get; }
 
     public override void _Ready()

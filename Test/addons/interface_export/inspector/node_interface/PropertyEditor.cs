@@ -37,6 +37,9 @@ internal partial class PropertyEditor : EditorProperty
         // Setup
         var editedObject = GetEditedObject();
 
+        if (editedObject == null)
+            return;
+
         _nodePathButton.Update((Node)editedObject.Get(GetEditedProperty()));
     }
 
