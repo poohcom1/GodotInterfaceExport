@@ -22,6 +22,8 @@ namespace GodotInterfaceExport.SourceGenerators
         // private static readonly string resourceAttributeName = Regex.Replace(resourceAttributeType, "Attribute$", "", RegexOptions.Compiled);
         private static readonly string[] attributeNames = [nodeAttributeName];
 
+        private static readonly string[] validTypes = ["Node", "Node?", "Godot.Node", "Godot.Node?"];
+
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             var syntaxProvider = context.SyntaxProvider.CreateSyntaxProvider(
@@ -82,13 +84,19 @@ namespace GodotInterfaceExport.SourceGenerators
                         if (!nodeInterfaces.ContainsKey(symbol.ContainingType))
                             nodeInterfaces[symbol.ContainingType] = [];
                         // Check if [Export] attribute is present
-                        bool missingExport = false; // !symbol.GetAttributes().Any(x => x.AttributeClass?.Name == "[Export]" || x.AttributeClass?.Name == "[Godot.Export]");
+                        bool exportAttribute = true; // symbol.GetAttributes().Any(x => x.AttributeClass?.Name == "[Export]" || x.AttributeClass?.Name == "[Godot.Export]"); // FIXME: Always warn atleast once and then stops
                         // Get our attribtues
                         var attributeSymbol = symbol.GetAttributes().SingleOrDefault(x => x.AttributeClass?.Name == nodeAttributeName);
                         if (attributeSymbol is null) continue;
                         if (node is PropertyDeclarationSyntax prop)
                         {
                             AddMember(prop.Identifier.Text);
+
+                            if (!validTypes.Contains(prop.Type.ToString()))
+                            {
+                                var descriptor = DiagnosticIssues.InvalidType(prop.Identifier.Text, prop.Type.ToString());
+                                context.ReportDiagnostic(Diagnostic.Create(descriptor, attributeSymbol.ApplicationSyntaxReference!.GetSyntax().GetLocation()));
+                            }
                         }
                         if (node is FieldDeclarationSyntax field)
                         {
@@ -98,7 +106,7 @@ namespace GodotInterfaceExport.SourceGenerators
                             }
                         }
 
-                        // Make this just a little more concise
+                        // Makes this just a little more concise
                         void AddMember(string name)
                         {
                             nodeInterfaces[symbol.ContainingType].Add(new NodeInterfaceModel(
@@ -108,7 +116,8 @@ namespace GodotInterfaceExport.SourceGenerators
                                 attributeSymbol.ApplicationSyntaxReference!.GetSyntax().GetLocation()
                             ));
 
-                            if (missingExport)
+
+                            if (!exportAttribute)
                             {
                                 var descriptor = DiagnosticIssues.NoExportAttribute(name);
                                 context.ReportDiagnostic(Diagnostic.Create(descriptor, attributeSymbol.ApplicationSyntaxReference.GetSyntax().GetLocation()));

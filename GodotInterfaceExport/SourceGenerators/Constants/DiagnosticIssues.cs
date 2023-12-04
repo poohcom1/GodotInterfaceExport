@@ -28,4 +28,16 @@ internal static class DiagnosticIssues
             true
         );
     }
+
+    public static DiagnosticDescriptor InvalidType(string memberName, string typeName)
+    {
+        return new DiagnosticDescriptor(
+            nameof(ExportInterface),
+            "Invalid type",
+            $"The member {memberName} has an invalid type of {typeName}. It should be a Godot Node.",
+            "Usage",
+            DiagnosticSeverity.Warning,
+            true
+        );
+    }
 }
