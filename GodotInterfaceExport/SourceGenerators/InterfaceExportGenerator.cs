@@ -130,12 +130,12 @@ namespace GodotInterfaceExport.SourceGenerators
                         if (context.CancellationToken.IsCancellationRequested)
                             return;
 
-                        var generateFields = nodeInterfaces[classSymbol].Where(x => x.GenerateField);
+                        var generatedProperties = nodeInterfaces[classSymbol].Where(x => x.GenerateField);
 
-                        if (!generateFields.Any())
+                        if (!generatedProperties.Any())
                             continue;
 
-                        var (content, diagnostics) = GenerateNodeInterfaces(classSymbol, generateFields);
+                        var (content, diagnostics) = GenerateNodeInterfaces(classSymbol, generatedProperties);
                         diagnostics.ToList().ForEach(context.ReportDiagnostic);
                         context.AddSource(GenerateFilename(classSymbol), content);
                     }
@@ -154,7 +154,7 @@ namespace GodotInterfaceExport.SourceGenerators
             var content = new List<string>();
             var diagnostics = new List<Diagnostic>();
 
-            // Generated fields
+            // Generated properties
             foreach (var node in nodeDetails)
             {
                 if (!node.IsNameValid())

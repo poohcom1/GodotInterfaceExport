@@ -2,96 +2,59 @@
 
 Godot C# package to support exporting interface types!
 
-_THIS PROJECT IS NOT PRODUCTION READY!_
+## Installation
 
-## Dev Logs
-Here are a couple of solutions I've explored, and their pros and cons and issues.
+1. Install the C# package from nuget.
 
-### 1. Source Generated Exports
-This is the current solution implemented. The issue is not a breaking one, but is still a major annoyance.
+```sh
+dotnet add package Godot.DependencyInjection
+```
 
-Annotate an interface property with an attribute, and a source generator will generate NodePath/Resource properties to represent each interface.
-An `InpectorPlugin` can be used to enforce the generic with reflection.
+2. Add `interface_export` to your addon folder.
+3. Activate the plugin from the project settings.
+
+## Usage
+
+To start using interface exports, add the `[ExportInterface]` attribute to an exported property. Make sure that:
+
+1. The exported value is a property. It cannot be a field.
+2. The property is also annotated with `[Export]`.
+3. The property name ends with "Node". (Similar to how signals need to end with "EventHandler")
 
 ```cs
-[Tool]
-public partial class MyNode : Node
+public partial class CharacterMovement : Node2D
 {
-    public override partial Array<Dictionary> _GetPropertyList();
-    public override partial Variant _Get(StringName property);
-    public override partial bool _Set(StringName property, Variant value);
-
-    [ExportNodeInterface]
-    public IComponent ComponentNode;
-
-    [ExportResourceInterface]
-    public IComponent ComponentNode;
-
-    public override voide _Ready()
-    {
-        WireComponents(this);
-    }
+    [Export]
+    [ExportInterface(typeof(ICollisionHitbox))]
+    private Node? _hitboxNode { set; get; }
 }
 ```
 
-| Pros | Cons | Issues |
-| -- | -- | -- |
-|  - No wrappers |  - Requires tool <br> - Requires `WireComponent()` generated method to get node from paths <br> - Requires partial methods | Source-generated properties reset on build for some reason (see https://github.com/poohcom1/GodotInterfaceExport/issues/1) |
-
-### 2. Node Container
-Use a generic node to trick Godot into accepting any Node. Interfaces can be enforced with a plugin like in solution 1. This hasn't worked so far due to the casting issue.
+Now, `ICollisionHitbox _hitbox` will be generated for you, and you can use it in your codebase as you please.
 
 ```cs
-// GenericNode
-public partial class GenericNode<T> : Node
+public override void _Ready()
 {
-    public T GetComponent() => (T)(object)this;
-}
-
-// Usage
-public partial class MyNode : Node
-{
-    [Export]
-    private GenericNode<IComponent> ComponentNode;
-
-    public override void _Ready()
-    {
-        IComponent component = ComponentNode.GetComponent();
-    }
+    _hitbox.CollisionHitboxMethod();
 }
 ```
 
-| Pros | Cons | Issues |
-| -- | -- | -- |
-|  - Doesn't require tool <br>  - Doesn't require attribute <br> - Doesn't require source generation | - Requires wrapper object | Godot prevents casting from the actual node type to `GenericNode<T>` |
+Furthermore, when selected the node in the Godot editor, the node picker will now type-check the node for you:
 
-### 3. Resource Container
-Use a generic resource type that contains a NodePath field. This did not work so far due to the resource script issue.
+![Node Picker](.readme/node_picker.png)
+
+### Manual Fields
+
+If you don't want to mess with source generators or just prefer your code to be more explicit, you can turn off the property generation:
 
 ```cs
-// GenericNode
-public partial class GenericContainer<T> : Resource
+public partial class CharacterMovement : Node2D
 {
     [Export]
-    private NodePath _path;
-
-    public T GetComponent(Node root) => (T)root.GetNode(_path);
-}
-
-// Usage
-public partial class MyNode : Node
-{
-    [Export]
-    private GenericContainer<IComponent> ComponentNode = new();
-
-    public override void _Ready()
-    {
-        IComponent component = ComponentNode.GetComponent(this);
-    }
+    [ExportInterface(typeof(ICollisionHitbox), false)]
+    private Node? _hitbox { set; get; }
+    public ICollisionHitbox? Hitbox => _hitbox as ICollisionHitbox;
 }
 ```
 
-| Pros | Cons | Issues |
-| -- | -- | -- |
-| Same as node container | - Requires one nesting level in export | Godot fails to serialize a non `[GlobalClass]` resource. We cannot make `GenericContainer<T>` a global class because it contains a generic. |
-
+This also gives you the freedom the name the exported property anything you want.
