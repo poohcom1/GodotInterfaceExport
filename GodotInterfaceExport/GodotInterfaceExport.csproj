@@ -21,7 +21,7 @@
     <RepositoryUrl>https://github.com/poohcom1/GodotInterfaceExport</RepositoryUrl>
     <Description>A Godot C# package to support exporting interface types!</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\LICENSE" Pack="true" PackagePath="\" />
@@ -32,7 +32,7 @@
 
   <!-- Package References -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
   </ItemGroup>
 </Project>
