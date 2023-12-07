@@ -164,7 +164,16 @@ namespace GodotInterfaceExport.SourceGenerators
                     continue;
                 }
 
-                content.Add($"public {node.InterfaceType} {node.GetGeneratedName()} => ({node.InterfaceType}){node.PropertyName};");
+                var name = node.GetGeneratedName();
+
+                content.Add("[EditorBrowsable(EditorBrowsableState.Never)]");
+                content.Add("[Browsable(false)]");
+                content.Add($"private {node.InterfaceType}? __{name} = null;");
+                content.Add($"public {node.InterfaceType} {name}");
+                content.Add("{");
+                content.Add($"    get => __{name} ??= ({node.InterfaceType}){node.PropertyName};");
+                content.Add($"    set => __{name} = value;");
+                content.Add("}");
             }
 
             // Usings

@@ -21,7 +21,7 @@
     <RepositoryUrl>https://github.com/poohcom1/GodotInterfaceExport</RepositoryUrl>
     <Description>A Godot C# package to support exporting interface types!</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\LICENSE" Pack="true" PackagePath="\" />
