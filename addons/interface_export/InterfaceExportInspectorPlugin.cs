@@ -45,6 +45,11 @@ internal partial class InterfaceExportInspectorPlugin : EditorInspectorPlugin
         bool wide
     )
     {
+        if (@object is null || (Script)@object.GetScript() is not CSharpScript)
+        {
+            return false;
+        }
+    
         if (
             _attributeAnalyzerService.GetAttributeInfo(
                 ProjectSettings.GlobalizePath(((Script)@object.GetScript()).ResourcePath),
