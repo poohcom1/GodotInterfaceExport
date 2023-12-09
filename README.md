@@ -22,7 +22,7 @@ To start using interface exports, add the `[ExportInterface]` attribute to an ex
 public partial class CharacterMovement : Node2D
 {
     [Export]
-    [ExportInterface(typeof(ICollisionHitbox))]
+    [ExportInterface(typeof(ICollisionHitbox), generatedProperty: true)]
     private Node? _hitboxNode { set; get; }
 }
 ```
@@ -53,7 +53,7 @@ If you don't want to mess with source generators or just prefer your code to be 
 public partial class CharacterMovement : Node2D
 {
     [Export]
-    [ExportInterface(typeof(ICollisionHitbox), generateProperty: false)]
+    [ExportInterface(typeof(ICollisionHitbox), generateProperty: false)] // Or leave out the second param
     private Node? _hitbox { set; get; }
     public ICollisionHitbox? Hitbox => _hitbox as ICollisionHitbox;
 }
