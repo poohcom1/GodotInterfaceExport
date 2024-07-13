@@ -1,3 +1,5 @@
+⚠️ This was a POC for interface exports and will not be maintained. If you want to see this in Godot, please go support [the pending PR](https://github.com/godotengine/godot/pull/86946)!
+
 # Godot Interface Export
 
 Godot C# package to support exporting interface types!
